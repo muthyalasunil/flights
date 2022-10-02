@@ -17,21 +17,22 @@ def calculate(number1,number2):
     product=number1*number2
     print('the product of %s and %s is %s' % (number1, number2, product))
 
-def load_airline():
-    airline_data_df = pd.read_csv(DATA_FOLDER+'\\airlines.csv')
-    airline_data_df = airline_data_df.sort_values(by=['AIRLINE'])
-    print(airline_data_df)
+def load_data(filename):
+    airline_data_df = pd.read_csv(DATA_FOLDER+'\\'+filename)
+    return airline_data_df
 
-def load_airports():
-    airport_df = pd.read_csv(DATA_FOLDER + '\\airports.csv')
-    airport_df = airport_df.sort_values(by=['AIRPORT'])
-    df_first_10 = airport_df.iloc[:10]
-    print(df_first_10)
-    print(airport_df[['CITY', 'AIRPORT']])
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
     print_hi('PyCharm')
-    load_airline()
-    load_airports()
+
+    airline_df = load_data('airlines.csv')
+    airline_df = airline_df.sort_values(by=['AIRLINE'])
+    print(airline_df)
+
+    airport_df = load_data('airports.csv')
+    airport_df = airport_df.sort_values(by=['AIRPORT'])
+    df_first_10 = airport_df.iloc[:10]
+    print(airport_df[['CITY', 'AIRPORT']])
+
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/
