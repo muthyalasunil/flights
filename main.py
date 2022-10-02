@@ -33,6 +33,9 @@ if __name__ == '__main__':
     airport_df = load_data('airports.csv')
     airport_df = airport_df.sort_values(by=['AIRPORT'])
     df_first_10 = airport_df.iloc[:10]
-    print(airport_df[['CITY', 'AIRPORT']])
+    print(df_first_10[['CITY', 'AIRPORT']])
 
+    flights_df = load_data('flights.csv')
+    #flights_df = flights_df.iloc[:10]
+    print(flights_df.shape)
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/
