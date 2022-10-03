@@ -61,6 +61,17 @@ def test_train(flights_df):
     print('Testing Features Shape:', test_features.shape)
     print('Testing Labels Shape:', test_labels.shape)
 
+
+    log_reg = LogisticRegression(random_state=0, solver='saga', max_iter=1000, multi_class='auto').fit(train_features,
+                                                                                                       train_labels)
+    filename = 'log_reg_model.sav'
+    pickle.dump(log_reg, open(filename, 'wb'))
+    y_pred = log_reg.predict(test_features)
+    print("Log Reg Accuracy:", metrics.accuracy_score(test_labels, y_pred))
+    confusion_matrix = pd.crosstab(test_labels, y_pred, rownames=['Actual'], colnames=['Predicted'])
+    print(confusion_matrix)
+
+    '''''
     # Instantiate model with 1000 decision trees
     rf_model = RandomForestClassifier(n_estimators=1000)
     rf_model.fit(train_features, train_labels)
@@ -71,6 +82,29 @@ def test_train(flights_df):
     print("RF Accuracy:", metrics.accuracy_score(test_labels, y_pred))
     confusion_matrix = pd.crosstab(test_labels, y_pred, rownames=['Actual'], colnames=['Predicted'])
     print(confusion_matrix)
+    '''''
+
+def predict_data(features, print_score=False):
+
+    filename = 'log_reg_model.sav'
+    loaded_model = pickle.load(open(filename, 'rb'))
+    feature_names = pickle.load(open('flights_df_model.features', 'rb'))
+
+    # summarize feature importance
+    if print_score:
+        importance = loaded_model.feature_importances_
+        for i,v in enumerate(importance):
+            print('%0s, Score: %.5f' % (feature_names[i],v))
+
+    features.drop(list(set(features.columns) - set(feature_names)), 1, inplace=True)
+    for new_col in list(set(feature_names) - set(features.columns)):
+        features[new_col] = 0
+    features = features[feature_names]
+    features = features.replace(np.nan, 0)
+
+    y_pred = loaded_model.predict(features)
+
+    return y_pred
 
 
 # Press the green button in the gutter to run the script.
@@ -89,6 +123,8 @@ if __name__ == '__main__':
 
     flights_df = load_data('flights.csv')
     flights_df['DELAY_FLAG'] = np.where(flights_df['ARRIVAL_DELAY'] > 0, 1, 0)
+    print(flights_df.iloc[:10].to_string())
+
     # storing in new variable
     # display
     #print(flights_df.columns.values)
@@ -108,4 +144,12 @@ if __name__ == '__main__':
     map_values = dict(zip(arr_dest_airport, range(len(arr_dest_airport))))
     flights_df["DESTINATION_AIRPORT"] = flights_df["DESTINATION_AIRPORT"].apply(lambda x: map_values[x])
 
-    test_train(flights_df)
+    #test_train(flights_df.iloc[:100000])
+
+
+    results_df = flights_df.iloc[-10000:]
+    y_pred = predict_data(flights_df.iloc[-10000:])
+    results_df['Y_PRED'] = pd.Series(y_pred, index=results_df.index)
+    results_df['_RESULT_'] = np.where(results_df['Y_PRED'] == results_df['DELAY_FLAG'], 1, 0)
+
+    print(results_df['_RESULT_'] .sum())
