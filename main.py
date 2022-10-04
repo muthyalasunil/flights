@@ -61,7 +61,7 @@ def test_train(flights_df):
     print('Testing Features Shape:', test_features.shape)
     print('Testing Labels Shape:', test_labels.shape)
 
-
+    '''''
     log_reg = LogisticRegression(random_state=0, solver='saga', max_iter=1000, multi_class='auto').fit(train_features,
                                                                                                        train_labels)
     filename = 'log_reg_model.sav'
@@ -70,10 +70,10 @@ def test_train(flights_df):
     print("Log Reg Accuracy:", metrics.accuracy_score(test_labels, y_pred))
     confusion_matrix = pd.crosstab(test_labels, y_pred, rownames=['Actual'], colnames=['Predicted'])
     print(confusion_matrix)
+    '''
 
-    '''''
     # Instantiate model with 1000 decision trees
-    rf_model = RandomForestClassifier(n_estimators=1000)
+    rf_model = RandomForestClassifier(n_estimators=100)
     rf_model.fit(train_features, train_labels)
 
     filename = 'rf_flights_model.sav'
@@ -82,7 +82,7 @@ def test_train(flights_df):
     print("RF Accuracy:", metrics.accuracy_score(test_labels, y_pred))
     confusion_matrix = pd.crosstab(test_labels, y_pred, rownames=['Actual'], colnames=['Predicted'])
     print(confusion_matrix)
-    '''''
+
 
 def predict_data(features, print_score=False):
 
