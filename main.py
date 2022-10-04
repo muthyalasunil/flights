@@ -96,7 +96,7 @@ def predict_data(features, print_score=False):
         for i,v in enumerate(importance):
             print('%0s, Score: %.5f' % (feature_names[i],v))
 
-    features.drop(list(set(features.columns) - set(feature_names)), 1, inplace=True)
+    features.drop(list(set(features.columns) - set(feature_names)), axis = 1)
     for new_col in list(set(feature_names) - set(features.columns)):
         features[new_col] = 0
     features = features[feature_names]
@@ -107,28 +107,8 @@ def predict_data(features, print_score=False):
     return y_pred
 
 
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('PyCharm')
-    '''
-    airline_df = load_data('airlines.csv')
-    airline_df = airline_df.sort_values(by=['AIRLINE'])
-    print(airline_df)
 
-    airport_df = load_data('airports.csv')
-    airport_df = airport_df.sort_values(by=['AIRPORT'])
-    df_first_10 = airport_df.iloc[:10]
-    print(df_first_10[['CITY', 'AIRPORT']])
-    '''
-
-    flights_df = load_data('flights.csv')
-    flights_df['DELAY_FLAG'] = np.where(flights_df['ARRIVAL_DELAY'] > 0, 1, 0)
-    print(flights_df.iloc[:10].to_string())
-
-    # storing in new variable
-    # display
-    #print(flights_df.columns.values)
-    #print(flights_df.iloc[:10].to_string())
+def prepare_data(flights_df):
 
     #AIRLINE, TAIL_NUMBER, ORIGIN_AIRPORT, DESTINATION_AIRPORT
     arr_airline = flights_df.AIRLINE.unique()
@@ -136,20 +116,34 @@ if __name__ == '__main__':
     arr_orig_airport = flights_df.ORIGIN_AIRPORT.unique()
     arr_dest_airport = flights_df.DESTINATION_AIRPORT.unique()
     map_values = dict(zip(arr_airline, range(len(arr_airline))))
-    flights_df["AIRLINE"] = flights_df["AIRLINE"].apply(lambda x: map_values[x])
+    flights_df['AIRLINE'].replace(map_values, inplace=True)
     map_values = dict(zip(arr_tail_nbr, range(len(arr_tail_nbr))))
-    flights_df["TAIL_NUMBER"] = flights_df["TAIL_NUMBER"].apply(lambda x: map_values[x])
+    flights_df['TAIL_NUMBER'].replace(map_values, inplace=True)
     map_values = dict(zip(arr_orig_airport, range(len(arr_orig_airport))))
-    flights_df["ORIGIN_AIRPORT"] = flights_df["ORIGIN_AIRPORT"].apply(lambda x: map_values[x])
+    flights_df['ORIGIN_AIRPORT'].replace(map_values, inplace=True)
     map_values = dict(zip(arr_dest_airport, range(len(arr_dest_airport))))
-    flights_df["DESTINATION_AIRPORT"] = flights_df["DESTINATION_AIRPORT"].apply(lambda x: map_values[x])
+    flights_df['DESTINATION_AIRPORT'].replace(map_values, inplace=True)
+    flights_df['DELAY_FLAG'] = np.where(flights_df['ARRIVAL_DELAY'] > 0, 1, 0)
 
-    #test_train(flights_df.iloc[:100000])
+    return flights_df
 
 
-    results_df = flights_df.iloc[-10000:]
-    y_pred = predict_data(flights_df.iloc[-10000:])
+# Press the green button in the gutter to run the script.
+if __name__ == '__main__':
+    flights_df = load_data('flights.csv')
+    flights_df = prepare_data(flights_df.iloc[:100000])
+    print(flights_df.iloc[:10].to_string())
+
+    test_train(flights_df)
+
+if __name__ == '__main1__':
+
+    flights_df = load_data('flights.csv')
+    flights_df = prepare_data(flights_df.iloc[-10000:])
+    results_df = flights_df.copy()
+    #print(flights_df.columns.values)
+
+    y_pred = predict_data(flights_df)
     results_df['Y_PRED'] = pd.Series(y_pred, index=results_df.index)
     results_df['_RESULT_'] = np.where(results_df['Y_PRED'] == results_df['DELAY_FLAG'], 1, 0)
-
-    print(results_df['_RESULT_'] .sum())
+    print("Predicted correct count :", results_df['_RESULT_'] .sum())
