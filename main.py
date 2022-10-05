@@ -11,12 +11,15 @@ from sklearn.model_selection import train_test_split
 from sklearn import metrics
 from sklearn import svm
 
+
 from sklearn.linear_model import LinearRegression
 from sklearn.linear_model import LogisticRegression
-
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.tree import DecisionTreeRegressor
+from sklearn.metrics import roc_curve
+from sklearn.metrics import roc_auc_score
+import matplotlib.pyplot as plt
 
 DATA_FOLDER = 'data'
 
@@ -61,16 +64,14 @@ def test_train(flights_df):
     print('Testing Features Shape:', test_features.shape)
     print('Testing Labels Shape:', test_labels.shape)
 
-    '''''
     log_reg = LogisticRegression(random_state=0, solver='saga', max_iter=1000, multi_class='auto').fit(train_features,
                                                                                                        train_labels)
     filename = 'log_reg_model.sav'
     pickle.dump(log_reg, open(filename, 'wb'))
-    y_pred = log_reg.predict(test_features)
-    print("Log Reg Accuracy:", metrics.accuracy_score(test_labels, y_pred))
-    confusion_matrix = pd.crosstab(test_labels, y_pred, rownames=['Actual'], colnames=['Predicted'])
+    y_pred1 = log_reg.predict(test_features)
+    print("Log Reg Accuracy:", metrics.accuracy_score(test_labels, y_pred1))
+    confusion_matrix = pd.crosstab(test_labels, y_pred1, rownames=['Actual'], colnames=['Predicted'])
     print(confusion_matrix)
-    '''
 
     # Instantiate model with 1000 decision trees
     rf_model = RandomForestClassifier(n_estimators=100)
@@ -78,10 +79,45 @@ def test_train(flights_df):
 
     filename = 'rf_flights_model.sav'
     pickle.dump(rf_model, open(filename, 'wb'))
-    y_pred = rf_model.predict(test_features)
-    print("RF Accuracy:", metrics.accuracy_score(test_labels, y_pred))
-    confusion_matrix = pd.crosstab(test_labels, y_pred, rownames=['Actual'], colnames=['Predicted'])
+    y_pred2 = rf_model.predict(test_features)
+    print("RF Accuracy:", metrics.accuracy_score(test_labels, y_pred2))
+    confusion_matrix = pd.crosstab(test_labels, y_pred2, rownames=['Actual'], colnames=['Predicted'])
     print(confusion_matrix)
+
+    # predict probabilities
+    pred_prob1 = log_reg.predict_proba(test_features)
+    pred_prob2 = rf_model.predict_proba(test_features)
+
+    # roc curve for models
+    fpr1, tpr1, thresh1 = roc_curve(test_labels, pred_prob1[:,1], pos_label=1)
+    fpr2, tpr2, thresh2 = roc_curve(test_labels, pred_prob2[:,1], pos_label=1)
+
+    # roc curve for tpr = fpr
+    random_probs = [0 for i in range(len(test_labels))]
+    p_fpr, p_tpr, _ = roc_curve(test_labels, random_probs, pos_label=1)
+
+    # auc scores
+    auc_score1 = roc_auc_score(test_labels, pred_prob1[:,1])
+    auc_score2 = roc_auc_score(test_labels, pred_prob2[:,1])
+
+    print(auc_score1, auc_score2)
+
+    plt.style.use('seaborn')
+
+    # plot roc curves
+    plt.plot(fpr1, tpr1, linestyle='--',color='orange', label='Logistic Regression')
+    plt.plot(fpr2, tpr2, linestyle='--',color='green', label='Random Forest Classifier')
+    plt.plot(p_fpr, p_tpr, linestyle='--', color='blue')
+    # title
+    plt.title('ROC curve')
+    # x label
+    plt.xlabel('False Positive Rate')
+    # y label
+    plt.ylabel('True Positive rate')
+
+    plt.legend(loc='best')
+    plt.savefig('ROC',dpi=300)
+    plt.show();
 
 
 def predict_data(features, print_score=False):
@@ -106,8 +142,6 @@ def predict_data(features, print_score=False):
 
     return y_pred
 
-
-
 def prepare_data(flights_df):
 
     #AIRLINE, TAIL_NUMBER, ORIGIN_AIRPORT, DESTINATION_AIRPORT
@@ -128,15 +162,18 @@ def prepare_data(flights_df):
     return flights_df
 
 
-# Press the green button in the gutter to run the script.
 if __name__ == '__main__':
+    flights_df = load_data('flights.csv')
+    print(flights_df.iloc[:10].to_string())
+
+if __name__ == '__main1__':
     flights_df = load_data('flights.csv')
     flights_df = prepare_data(flights_df.iloc[:100000])
     print(flights_df.iloc[:10].to_string())
 
     test_train(flights_df)
 
-if __name__ == '__main1__':
+if __name__ == '__main2__':
 
     flights_df = load_data('flights.csv')
     flights_df = prepare_data(flights_df.iloc[-10000:])
