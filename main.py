@@ -16,7 +16,8 @@ from sklearn.linear_model import LinearRegression
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.tree import DecisionTreeRegressor
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import roc_curve
 from sklearn.metrics import roc_auc_score
 import matplotlib.pyplot as plt
@@ -84,13 +85,24 @@ def test_train(flights_df):
     confusion_matrix = pd.crosstab(test_labels, y_pred2, rownames=['Actual'], colnames=['Predicted'])
     print(confusion_matrix)
 
+    knn = DecisionTreeClassifier()
+    knn.fit(train_features, train_labels)
+    filename = 'dtree_flights_model.sav'
+    pickle.dump(knn, open(filename, 'wb'))
+    y_pred3 = knn.predict(test_features)
+    print("DecisionTreeClassifier Accuracy:", metrics.accuracy_score(test_labels, y_pred3))
+    confusion_matrix = pd.crosstab(test_labels, y_pred3, rownames=['Actual'], colnames=['Predicted'])
+    print(confusion_matrix)
+
     # predict probabilities
     pred_prob1 = log_reg.predict_proba(test_features)
     pred_prob2 = rf_model.predict_proba(test_features)
+    pred_prob3 = knn.predict_proba(test_features)
 
     # roc curve for models
     fpr1, tpr1, thresh1 = roc_curve(test_labels, pred_prob1[:,1], pos_label=1)
     fpr2, tpr2, thresh2 = roc_curve(test_labels, pred_prob2[:,1], pos_label=1)
+    fpr3, tpr3, thresh3 = roc_curve(test_labels, pred_prob3[:,1], pos_label=1)
 
     # roc curve for tpr = fpr
     random_probs = [0 for i in range(len(test_labels))]
@@ -99,14 +111,16 @@ def test_train(flights_df):
     # auc scores
     auc_score1 = roc_auc_score(test_labels, pred_prob1[:,1])
     auc_score2 = roc_auc_score(test_labels, pred_prob2[:,1])
+    auc_score3 = roc_auc_score(test_labels, pred_prob3[:,1])
 
-    print(auc_score1, auc_score2)
+    print(auc_score1, auc_score2, auc_score3)
 
     plt.style.use('seaborn')
 
     # plot roc curves
     plt.plot(fpr1, tpr1, linestyle='--',color='orange', label='Logistic Regression')
     plt.plot(fpr2, tpr2, linestyle='--',color='green', label='Random Forest Classifier')
+    plt.plot(fpr3, tpr3, linestyle='--',color='blue', label='DecisionTree Classifier')
     plt.plot(p_fpr, p_tpr, linestyle='--', color='blue')
     # title
     plt.title('ROC curve')
@@ -157,6 +171,8 @@ def prepare_data(flights_df):
     flights_df['ORIGIN_AIRPORT'].replace(map_values, inplace=True)
     map_values = dict(zip(arr_dest_airport, range(len(arr_dest_airport))))
     flights_df['DESTINATION_AIRPORT'].replace(map_values, inplace=True)
+
+    #create labelled target variable for building the model
     flights_df['DELAY_FLAG'] = np.where(flights_df['ARRIVAL_DELAY'] > 0, 1, 0)
 
     return flights_df
@@ -165,9 +181,11 @@ def prepare_data(flights_df):
 if __name__ == '__main__':
     flights_df = load_data('flights.csv')
     print(flights_df.iloc[:10].to_string())
+    print(flights_df.shape)
 
 if __name__ == '__main1__':
     flights_df = load_data('flights.csv')
+    #first 100k records for building the model
     flights_df = prepare_data(flights_df.iloc[:100000])
     print(flights_df.iloc[:10].to_string())
 
@@ -176,6 +194,7 @@ if __name__ == '__main1__':
 if __name__ == '__main2__':
 
     flights_df = load_data('flights.csv')
+    #last 10k records for predicting the delays
     flights_df = prepare_data(flights_df.iloc[-10000:])
     results_df = flights_df.copy()
     #print(flights_df.columns.values)
