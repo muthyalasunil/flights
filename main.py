@@ -47,7 +47,7 @@ def test_train(flights_df):
     # Remove the labels from the features
     # axis 1 refers to the columns
     flights_df = flights_df.replace(np.nan, 0)
-    features = flights_df.drop(['ARRIVAL_DELAY', 'CANCELLATION_REASON', 'DIVERTED', 'CANCELLED', 'DELAY_FLAG'], axis=1)
+    features = flights_df.drop(['DELAY_FLAG'], axis=1)
 
     pickle.dump(features.columns, open('flights_df_model.features', 'wb'))
 
@@ -158,6 +158,8 @@ def predict_data(features, print_score=False):
 
 def prepare_data(flights_df):
 
+    flights_df = flights_df.drop(['YEAR', 'CANCELLATION_REASON', 'DIVERTED', 'CANCELLED'], axis=1)
+
     #AIRLINE, TAIL_NUMBER, ORIGIN_AIRPORT, DESTINATION_AIRPORT
     arr_airline = flights_df.AIRLINE.unique()
     arr_tail_nbr = flights_df.TAIL_NUMBER.unique()
@@ -174,16 +176,16 @@ def prepare_data(flights_df):
 
     #create labelled target variable for building the model
     flights_df['DELAY_FLAG'] = np.where(flights_df['ARRIVAL_DELAY'] > 0, 1, 0)
+    flights_df = flights_df.drop(['ARRIVAL_DELAY'], axis=1)
 
     return flights_df
 
-
-if __name__ == '__main__':
+if __name__ == '__main0__':
     flights_df = load_data('flights.csv')
     print(flights_df.iloc[:10].to_string())
     print(flights_df.shape)
 
-if __name__ == '__main1__':
+if __name__ == '__main__':
     flights_df = load_data('flights.csv')
     #first 100k records for building the model
     flights_df = prepare_data(flights_df.iloc[:100000])
