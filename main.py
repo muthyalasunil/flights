@@ -156,7 +156,7 @@ def predict_data(features, print_score=False):
 
     return y_pred
 
-def prepare_data(flights_df):
+def build_features(flights_df):
 
     flights_df = flights_df.drop(['YEAR', 'CANCELLATION_REASON', 'DIVERTED', 'CANCELLED'], axis=1)
 
@@ -188,7 +188,7 @@ if __name__ == '__main0__':
 if __name__ == '__main__':
     flights_df = load_data('flights.csv')
     #first 100k records for building the model
-    flights_df = prepare_data(flights_df.iloc[:100000])
+    flights_df = build_features(flights_df.iloc[:100000])
     print(flights_df.iloc[:10].to_string())
 
     test_train(flights_df)
@@ -197,7 +197,7 @@ if __name__ == '__main2__':
 
     flights_df = load_data('flights.csv')
     #last 10k records for predicting the delays
-    flights_df = prepare_data(flights_df.iloc[-10000:])
+    flights_df = build_features(flights_df.iloc[-10000:])
     results_df = flights_df.copy()
     #print(flights_df.columns.values)
 
